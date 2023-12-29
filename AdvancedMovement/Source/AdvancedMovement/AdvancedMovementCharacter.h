@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "AdvancedMovementCharacter.generated.h"
 
 UCLASS()
@@ -26,17 +27,18 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
-	// ==== Camera ====
+	// ==== Basic Movement ====
 
-
-
-	// ==== Movement ====
+	UCharacterMovementComponent* MovementComponent;
 
 	void MoveForward(float Value);
 	void MoveRight(float Value);
 	void MovementTick();
 
 	FVector InputVector = FVector(0.f, 0.f, 0.f);
+
+
+	// ==== Camera ====
 
 	void LookYaw(float Value);
 	void LookPitch(float Value);
@@ -45,4 +47,19 @@ public:
 	FVector2D LookVector = FVector2D(0.f, 0.f);
 	float LookSensitivity = 10.f;
 	
+
+	// ==== Sprint ====
+
+	void BeginSprint();
+	void EndSprint();
+	void SprintTick();
+	
+	bool IsSprinting = false;
+	float WalkSpeed = 300.f;
+	float RunSpeed = 650.f;
+
+	// ==== Jumping ==== 
+
+	void BeginJump();
+
 };

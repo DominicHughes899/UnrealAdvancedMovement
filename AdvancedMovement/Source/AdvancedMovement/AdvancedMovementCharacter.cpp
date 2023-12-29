@@ -2,7 +2,7 @@
 
 
 #include "AdvancedMovementCharacter.h"
-#include "GameFramework/CharacterMovementComponent.h"
+
 
 // Sets default values
 AAdvancedMovementCharacter::AAdvancedMovementCharacter()
@@ -10,6 +10,7 @@ AAdvancedMovementCharacter::AAdvancedMovementCharacter()
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	JumpMaxCount = 2;
 }
 
 // Called when the game starts or when spawned
@@ -17,6 +18,10 @@ void AAdvancedMovementCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	MovementComponent = GetCharacterMovement();
+
+
+	MovementComponent->MaxWalkSpeed = 300.f;
 }
 
 // Called every frame
@@ -26,6 +31,7 @@ void AAdvancedMovementCharacter::Tick(float DeltaTime)
 
 	MovementTick();
 	LookTick(DeltaTime);
+	SprintTick();
 }
 
 // Called to bind functionality to input
@@ -37,6 +43,10 @@ void AAdvancedMovementCharacter::SetupPlayerInputComponent(UInputComponent* Play
 	InputComponent->BindAxis("IAx_MoveRight", this, &AAdvancedMovementCharacter::MoveRight);
 	InputComponent->BindAxis("IAx_LookHorizontal", this, &AAdvancedMovementCharacter::LookYaw);
 	InputComponent->BindAxis("IAx_LookVertical", this, &AAdvancedMovementCharacter::LookPitch);
+
+	InputComponent->BindAction("IA_Sprint", IE_Pressed, this, &AAdvancedMovementCharacter::BeginSprint);
+	InputComponent->BindAction("IA_Sprint", IE_Released, this, &AAdvancedMovementCharacter::EndSprint);
+	InputComponent->BindAction("IA_Jump", IE_Pressed, this, &AAdvancedMovementCharacter::BeginJump);
 }
 
 void AAdvancedMovementCharacter::MoveForward(float Value)
@@ -54,8 +64,6 @@ void AAdvancedMovementCharacter::MovementTick()
 	FVector MovementInput = (GetActorForwardVector() * InputVector.X) + (GetActorRightVector() * InputVector.Y);
 
 	AddMovementInput(MovementInput);
-
-	//GetCharacterMovement()->AddInputVector(MovementInput);
 }
 
 void AAdvancedMovementCharacter::LookYaw(float Value)
@@ -75,5 +83,34 @@ void AAdvancedMovementCharacter::LookTick(float DeltaTime)
 
 	AddControllerYawInput(YawValue);
 	AddControllerPitchInput(PitchValue);
+}
+
+void AAdvancedMovementCharacter::BeginSprint()
+{
+	IsSprinting = true;
+	MovementComponent->MaxWalkSpeed = RunSpeed;
+}
+
+void AAdvancedMovementCharacter::EndSprint()
+{
+	IsSprinting = false;
+	MovementComponent->MaxWalkSpeed = WalkSpeed;
+}
+
+void AAdvancedMovementCharacter::SprintTick()
+{
+	if (IsSprinting)
+	{
+		if (InputVector.X <= 0.f)
+		{
+			EndSprint();
+		}
+	}
+}
+
+void AAdvancedMovementCharacter::BeginJump()
+{
+	Jump();
+
 }
 
