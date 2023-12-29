@@ -26,4 +26,15 @@ public:
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	// ==== Camera ====
+
+
+
+	// ==== Movement ====
+
+	void MoveForward(float Value);
+	void MoveRight(float Value);
+	void MovementTick();
+
+	FVector InputVector = FVector(0.f, 0.f, 0.f);
 };

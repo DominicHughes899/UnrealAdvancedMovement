@@ -2,6 +2,7 @@
 
 
 #include "AdvancedMovementCharacter.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 // Sets default values
 AAdvancedMovementCharacter::AAdvancedMovementCharacter()
@@ -23,6 +24,7 @@ void AAdvancedMovementCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	MovementTick();
 }
 
 // Called to bind functionality to input
@@ -30,5 +32,24 @@ void AAdvancedMovementCharacter::SetupPlayerInputComponent(UInputComponent* Play
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
+	InputComponent->BindAxis("IAx_MoveForward", this, &AAdvancedMovementCharacter::MoveForward);
+	InputComponent->BindAxis("IAx_MoveRight", this, &AAdvancedMovementCharacter::MoveRight);
+}
+
+void AAdvancedMovementCharacter::MoveForward(float Value)
+{
+	InputVector.X = Value;
+}
+
+void AAdvancedMovementCharacter::MoveRight(float Value)
+{
+	InputVector.Y = Value;
+}
+
+void AAdvancedMovementCharacter::MovementTick()
+{
+	FVector MovementInput = (GetActorForwardVector() * InputVector.X) + (GetActorRightVector() * InputVector.Y);
+
+	GetCharacterMovement()->AddInputVector(MovementInput);
 }
 
