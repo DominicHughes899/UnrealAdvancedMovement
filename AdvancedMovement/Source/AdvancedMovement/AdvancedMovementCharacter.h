@@ -45,7 +45,7 @@ public:
 	void LookTick(float DeltaTime);
 
 	FVector2D LookVector = FVector2D(0.f, 0.f);
-	float LookSensitivity = 10.f;
+	float LookSensitivity = 20.f;
 	
 
 	// ==== Sprint ====
@@ -58,8 +58,22 @@ public:
 	float WalkSpeed = 300.f;
 	float RunSpeed = 650.f;
 
-	// ==== Jumping ==== 
 
-	void BeginJump();
+	// ==== Ledge Detection ====
+
+	void JumpPressed();
+
+	void DetectLedge();
+	FVector FindLedgeLocation(FHitResult Body);
+
+	UPROPERTY(BlueprintReadOnly)
+	bool LedgeAvailable;
+
+	UPROPERTY(BlueprintReadOnly)
+	FVector LedgeLocation;
+
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void UpdateText();
 
 };
