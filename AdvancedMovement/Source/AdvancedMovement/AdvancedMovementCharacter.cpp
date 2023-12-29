@@ -25,6 +25,7 @@ void AAdvancedMovementCharacter::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	MovementTick();
+	LookTick(DeltaTime);
 }
 
 // Called to bind functionality to input
@@ -34,6 +35,8 @@ void AAdvancedMovementCharacter::SetupPlayerInputComponent(UInputComponent* Play
 
 	InputComponent->BindAxis("IAx_MoveForward", this, &AAdvancedMovementCharacter::MoveForward);
 	InputComponent->BindAxis("IAx_MoveRight", this, &AAdvancedMovementCharacter::MoveRight);
+	InputComponent->BindAxis("IAx_LookHorizontal", this, &AAdvancedMovementCharacter::LookYaw);
+	InputComponent->BindAxis("IAx_LookVertical", this, &AAdvancedMovementCharacter::LookPitch);
 }
 
 void AAdvancedMovementCharacter::MoveForward(float Value)
@@ -50,6 +53,27 @@ void AAdvancedMovementCharacter::MovementTick()
 {
 	FVector MovementInput = (GetActorForwardVector() * InputVector.X) + (GetActorRightVector() * InputVector.Y);
 
-	GetCharacterMovement()->AddInputVector(MovementInput);
+	AddMovementInput(MovementInput);
+
+	//GetCharacterMovement()->AddInputVector(MovementInput);
+}
+
+void AAdvancedMovementCharacter::LookYaw(float Value)
+{
+	LookVector.X = Value;
+}
+
+void AAdvancedMovementCharacter::LookPitch(float Value)
+{
+	LookVector.Y = Value;
+}
+
+void AAdvancedMovementCharacter::LookTick(float DeltaTime)
+{
+	float YawValue = LookVector.X * LookSensitivity * DeltaTime;
+	float PitchValue = LookVector.Y * LookSensitivity * DeltaTime;
+
+	AddControllerYawInput(YawValue);
+	AddControllerPitchInput(PitchValue);
 }
 

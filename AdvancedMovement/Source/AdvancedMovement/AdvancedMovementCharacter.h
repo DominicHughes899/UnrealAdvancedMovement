@@ -37,4 +37,12 @@ public:
 	void MovementTick();
 
 	FVector InputVector = FVector(0.f, 0.f, 0.f);
+
+	void LookYaw(float Value);
+	void LookPitch(float Value);
+	void LookTick(float DeltaTime);
+
+	FVector2D LookVector = FVector2D(0.f, 0.f);
+	float LookSensitivity = 10.f;
+	
 };
