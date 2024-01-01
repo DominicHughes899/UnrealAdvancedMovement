@@ -3,6 +3,8 @@
 
 #include "AdvancedMovementCharacter.h"
 #include "DrawDebugHelpers.h"
+#include "Kismet/GameplayStatics.h"
+
 
 
 // Sets default values
@@ -18,6 +20,8 @@ AAdvancedMovementCharacter::AAdvancedMovementCharacter()
 void AAdvancedMovementCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+
+	PlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
 	
 	MovementComponent = GetCharacterMovement();
 
@@ -30,11 +34,17 @@ void AAdvancedMovementCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	// Movement Ticks
 	MovementTick();
 	LookTick(DeltaTime);
 	SprintTick();
 
+	// Ledge Detection ticks
 	DetectLedge();
+	ClimbLedgeUpdate(DeltaTime);
+
+
+	// Blueprint functions
 	UpdateText();
 }
 
@@ -65,9 +75,12 @@ void AAdvancedMovementCharacter::MoveRight(float Value)
 
 void AAdvancedMovementCharacter::MovementTick()
 {
-	FVector MovementInput = (GetActorForwardVector() * InputVector.X) + (GetActorRightVector() * InputVector.Y);
+	if (MovementEnabled)
+	{
+		FVector MovementInput = (GetActorForwardVector() * InputVector.X) + (GetActorRightVector() * InputVector.Y);
 
-	AddMovementInput(MovementInput);
+		AddMovementInput(MovementInput);
+	}
 }
 
 void AAdvancedMovementCharacter::LookYaw(float Value)
@@ -87,6 +100,7 @@ void AAdvancedMovementCharacter::LookTick(float DeltaTime)
 
 	AddControllerYawInput(YawValue);
 	AddControllerPitchInput(PitchValue);
+	
 }
 
 void AAdvancedMovementCharacter::BeginSprint()
@@ -118,12 +132,7 @@ void AAdvancedMovementCharacter::JumpPressed()
 
 	if (LedgeAvailable)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Climbing"));
-
-		FVector climbLocation = LedgeLocation;
-		climbLocation.Z += 60.f;
-
-		SetActorLocation(climbLocation);
+		BeginClimbLedge();
 	}
 }
 
@@ -132,9 +141,13 @@ void AAdvancedMovementCharacter::DetectLedge()
 	LedgeAvailable = false;
 	if (MovementComponent->IsFalling())
 	{
+		// Line trace from Torso
+
 		FHitResult hitResultBody;
 		FVector startLocationBody = GetActorLocation();
 		FVector endLocationBody = startLocationBody + (GetActorForwardVector() * 400);
+
+		// Line trace from Head
 
 		FHitResult hitResultHead;
 		FVector startLocationHead = startLocationBody + FVector(0.f, 0.f, 70.f);
@@ -147,9 +160,9 @@ void AAdvancedMovementCharacter::DetectLedge()
 			ECC_GameTraceChannel1);
 
 		if (hitSuccessBody)
-		{
-			//DrawDebugLine(GetWorld(), startLocationBody, endLocationBody, FColor::Red, false, 5.f);
-			
+		{	
+			// Run head line trace only if torso line trace hits
+
 			bool hitSuccessHead = GetWorld()->LineTraceSingleByChannel(hitResultHead,
 				startLocationHead,
 				endLocationHead,
@@ -157,6 +170,8 @@ void AAdvancedMovementCharacter::DetectLedge()
 
 			if (!hitSuccessHead)
 			{
+				// Run specific ledge location finder only if the head trace fails
+
 				LedgeLocation = FindLedgeLocation(hitResultBody);
 
 				LedgeAvailable = true;
@@ -195,6 +210,57 @@ FVector AAdvancedMovementCharacter::FindLedgeLocation(FHitResult Body)
 	}
 
 	return FVector();
+}
+
+void AAdvancedMovementCharacter::BeginClimbLedge()
+{
+	// Activate Climb Update
+	IsClimbingLedge = true;
+
+	// Set Ledge Location
+	
+	MantleStartLocation = GetActorLocation();
+	MantleEndLocation = LedgeLocation;
+	MantleEndLocation += GetActorForwardVector() * 100;
+	MantleEndLocation.Z += 100.f;
+
+	// Disable Input
+	MovementEnabled = false;
+
+	// Reset Movement 
+	MovementComponent->StopMovementImmediately();
+
+}
+
+void AAdvancedMovementCharacter::ClimbLedgeUpdate(float DeltaTime)
+{
+	if (IsClimbingLedge)
+	{
+		MantleTimer += DeltaTime;
+
+		float MantleAlpha = MantleTimer / MantleTime;
+		FVector NewLoc = FMath::Lerp(MantleStartLocation, MantleEndLocation, MantleAlpha);
+
+		SetActorLocation(NewLoc);
+		
+		if (MantleTimer >= MantleTime)
+		{
+			EndClimbLedge();
+		}
+	}
+}
+
+void AAdvancedMovementCharacter::EndClimbLedge()
+{
+	// Disable climb update
+	IsClimbingLedge = false;
+
+	// Reset Timer
+	MantleTimer = 0.f;
+	
+	// Enable Movement
+	MovementEnabled = true;
+
 }
 
 

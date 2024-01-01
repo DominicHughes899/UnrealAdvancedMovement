@@ -29,6 +29,8 @@ public:
 
 	// ==== Basic Movement ====
 
+	APlayerController* PlayerController;
+
 	UCharacterMovementComponent* MovementComponent;
 
 	void MoveForward(float Value);
@@ -36,6 +38,8 @@ public:
 	void MovementTick();
 
 	FVector InputVector = FVector(0.f, 0.f, 0.f);
+
+	bool MovementEnabled = true;
 
 
 	// ==== Camera ====
@@ -45,6 +49,8 @@ public:
 	void LookTick(float DeltaTime);
 
 	FVector2D LookVector = FVector2D(0.f, 0.f);
+
+	UPROPERTY(EditAnywhere)
 	float LookSensitivity = 20.f;
 	
 
@@ -66,12 +72,26 @@ public:
 	void DetectLedge();
 	FVector FindLedgeLocation(FHitResult Body);
 
+	void BeginClimbLedge();
+	void ClimbLedgeUpdate(float DeltaTime);
+	void EndClimbLedge();
+	
+	bool IsClimbingLedge = false;
+	FVector MantleStartLocation;
+	FVector MantleEndLocation;
+
+	float MantleTime = .5f;
+	float MantleTimer = 0.f;
+
 	UPROPERTY(BlueprintReadOnly)
 	bool LedgeAvailable;
 
 	UPROPERTY(BlueprintReadOnly)
 	FVector LedgeLocation;
 
+	
+
+	// ==== Blueprint Functions ====
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void UpdateText();
