@@ -89,7 +89,25 @@ public:
 	UPROPERTY(BlueprintReadOnly)
 	FVector LedgeLocation;
 
-	
+	// ==== Wall Running ====
+	void WallRunRight();
+
+	bool CheckCanWallRunRight();
+
+	void BeginWallRunRight();
+	void WallRunRightTick(float DeltaTime);
+	void EndWallRunRight();
+
+	FVector WallDirection; 
+	FVector SnapStartLocation;
+	FVector SnapToPoint;
+	float DistanceFromWall = 80.f;
+
+	float SnapTimer = 0.f;
+	float SnapTime = 0.3f;
+	bool HasSnapped = false;
+	bool IsWallRunningRight = false;
+
 
 	// ==== Blueprint Functions ====
 
