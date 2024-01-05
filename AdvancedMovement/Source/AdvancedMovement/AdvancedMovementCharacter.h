@@ -51,7 +51,7 @@ public:
 	FVector2D LookVector = FVector2D(0.f, 0.f);
 
 	UPROPERTY(EditAnywhere)
-	float LookSensitivity = 20.f;
+	float LookSensitivity = 10.f;
 	
 
 	// ==== Sprint ====
@@ -90,6 +90,24 @@ public:
 	FVector LedgeLocation;
 
 	
+	// ==== WallRun ====
+	bool WallRunTrace();
+	void WallRunTick(float DeltaTime);
+
+	void BeginWallRun();
+	void EndWallRun();
+
+	FVector LaunchVector;
+
+	UPROPERTY(BlueprintReadOnly)
+	bool IsWallRunning = false;
+
+	UPROPERTY(BlueprintReadOnly)
+	bool CanWallRun = false;
+
+	UPROPERTY(BlueprintReadOnly)
+	FVector WallRunLocation;
+
 
 	// ==== Blueprint Functions ====
 

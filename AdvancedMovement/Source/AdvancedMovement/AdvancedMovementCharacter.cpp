@@ -43,6 +43,8 @@ void AAdvancedMovementCharacter::Tick(float DeltaTime)
 	DetectLedge();
 	ClimbLedgeUpdate(DeltaTime);
 
+	// Wall Run
+	WallRunTick(DeltaTime);
 
 	// Blueprint functions
 	UpdateText();
@@ -128,11 +130,23 @@ void AAdvancedMovementCharacter::SprintTick()
 
 void AAdvancedMovementCharacter::JumpPressed()
 {
-	Jump();
-
 	if (LedgeAvailable)
 	{
 		BeginClimbLedge();
+	}
+	else if (IsWallRunning)
+	{
+		LaunchCharacter(LaunchVector * 420.f, false, false);
+	}
+	else if (CanWallRun)
+	{
+		BeginWallRun();
+	}
+	else
+	{
+		Jump();
+		 
+		UE_LOG(LogTemp, Warning, TEXT("Jumping..."));
 	}
 }
 
@@ -202,8 +216,6 @@ FVector AAdvancedMovementCharacter::FindLedgeLocation(FHitResult Body)
 
 	if (success)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Location Found"));
-
 		DrawDebugSphere(GetWorld(), hitResult.ImpactPoint, 5.f, 32, FColor::Red, false, 5.f);
 
 		return(hitResult.ImpactPoint);
@@ -261,6 +273,75 @@ void AAdvancedMovementCharacter::EndClimbLedge()
 	// Enable Movement
 	MovementEnabled = true;
 
+}
+
+bool AAdvancedMovementCharacter::WallRunTrace()
+{
+	FHitResult HitResult;
+	FVector StartLocation = GetActorLocation();
+	FVector EndLocation = StartLocation + (((GetActorForwardVector() * 2.f) + GetActorRightVector()) * 100);
+
+	bool Trace = GetWorld()->LineTraceSingleByChannel(HitResult, StartLocation, EndLocation, ECC_GameTraceChannel2);
+
+	if (Trace)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Trace Hit"));
+
+		WallRunLocation = HitResult.ImpactPoint + HitResult.ImpactNormal * 50.f;
+
+		LaunchVector = HitResult.ImpactNormal + FVector(0.f, 0.f, 1.f);
+
+		return true;
+	}
+
+	return false;
+}
+
+void AAdvancedMovementCharacter::WallRunTick(float DeltaTime)
+{
+	if (CanWallRun && !MovementComponent->IsFalling())
+	{
+		CanWallRun = false;
+	}
+
+	FVector LateralVelocity = GetVelocity();
+	LateralVelocity.Z = 0.f;
+
+	if (JumpCurrentCount != 0 && LateralVelocity.Length() > 400.f || CanWallRun)
+	{
+		CanWallRun = WallRunTrace();
+	}
+
+	if (IsWallRunning && !CanWallRun)
+	{
+		EndWallRun();
+	}
+
+
+}
+
+void AAdvancedMovementCharacter::BeginWallRun()
+{
+	IsWallRunning = true;
+
+	// Change Gravity
+	MovementComponent->GravityScale = 0.f;
+
+	// Set Z Velocity to 0
+
+	FVector NewVel = MovementComponent->Velocity;
+	NewVel.Z = 0.f;
+	MovementComponent->Velocity = NewVel;
+
+
+}
+
+void AAdvancedMovementCharacter::EndWallRun()
+{
+	IsWallRunning = false;
+
+	// Change Gravity
+	MovementComponent->GravityScale = 1.f;
 }
 
 
