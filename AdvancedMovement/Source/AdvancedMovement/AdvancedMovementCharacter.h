@@ -51,7 +51,7 @@ public:
 	FVector2D LookVector = FVector2D(0.f, 0.f);
 
 	UPROPERTY(EditAnywhere)
-	float LookSensitivity = 20.f;
+	float LookSensitivity = 10.f;
 	
 
 	// ==== Sprint ====
@@ -89,24 +89,24 @@ public:
 	UPROPERTY(BlueprintReadOnly)
 	FVector LedgeLocation;
 
-	// ==== Wall Running ====
-	void WallRunRight();
+	
+	// ==== WallRun ====
+	bool WallRunTrace();
+	void WallRunTick(float DeltaTime);
 
-	bool CheckCanWallRunRight();
+	void BeginWallRun();
+	void EndWallRun();
 
-	void BeginWallRunRight();
-	void WallRunRightTick(float DeltaTime);
-	void EndWallRunRight();
+	FVector LaunchVector;
 
-	FVector WallDirection; 
-	FVector SnapStartLocation;
-	FVector SnapToPoint;
-	float DistanceFromWall = 80.f;
+	UPROPERTY(BlueprintReadOnly)
+	bool IsWallRunning = false;
 
-	float SnapTimer = 0.f;
-	float SnapTime = 0.3f;
-	bool HasSnapped = false;
-	bool IsWallRunningRight = false;
+	UPROPERTY(BlueprintReadOnly)
+	bool CanWallRun = false;
+
+	UPROPERTY(BlueprintReadOnly)
+	FVector WallRunLocation;
 
 
 	// ==== Blueprint Functions ====
