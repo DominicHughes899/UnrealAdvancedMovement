@@ -6,6 +6,7 @@ aswell as the ability to mantle ledges and wall run.
 All abilities are managed under 1 "Jump" button press.
 
 ======================================================================
+
 Notable code found in:
 
 AdvancedMovement/Source/AdvancedMovement/AdvancedMovementCharacter.h
