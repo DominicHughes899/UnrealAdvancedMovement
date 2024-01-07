@@ -37,6 +37,8 @@ public:
 	void MoveRight(float Value);
 	void MovementTick();
 
+	void JumpPressed();
+
 	FVector InputVector = FVector(0.f, 0.f, 0.f);
 
 	bool MovementEnabled = true;
@@ -51,7 +53,7 @@ public:
 	FVector2D LookVector = FVector2D(0.f, 0.f);
 
 	UPROPERTY(EditAnywhere)
-	float LookSensitivity = 10.f;
+	float LookSensitivity = 5.f;
 	
 
 	// ==== Sprint ====
@@ -66,8 +68,6 @@ public:
 
 
 	// ==== Ledge Detection ====
-
-	void JumpPressed();
 
 	void DetectLedge();
 	FVector FindLedgeLocation(FHitResult Body);
@@ -91,6 +91,7 @@ public:
 
 	
 	// ==== WallRun ====
+
 	bool WallRunTrace();
 	void WallRunTick(float DeltaTime);
 
@@ -98,6 +99,7 @@ public:
 	void EndWallRun();
 
 	FVector LaunchVector;
+	FVector WallTangent;
 
 	UPROPERTY(BlueprintReadOnly)
 	bool IsWallRunning = false;
@@ -107,6 +109,12 @@ public:
 
 	UPROPERTY(BlueprintReadOnly)
 	FVector WallRunLocation;
+
+
+	// ==== Grapple Hook ====
+
+	void FireGrapple();
+
 
 
 	// ==== Blueprint Functions ====

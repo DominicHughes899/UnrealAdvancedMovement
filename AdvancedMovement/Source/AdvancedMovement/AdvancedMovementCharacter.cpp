@@ -4,6 +4,7 @@
 #include "AdvancedMovementCharacter.h"
 #include "DrawDebugHelpers.h"
 #include "Kismet/GameplayStatics.h"
+#include "Kismet/KismetMathLibrary.h"
 
 
 
@@ -65,6 +66,9 @@ void AAdvancedMovementCharacter::SetupPlayerInputComponent(UInputComponent* Play
 	InputComponent->BindAction("IA_Jump", IE_Pressed, this, &AAdvancedMovementCharacter::JumpPressed);
 }
 
+
+// ==== Basic Movement ====
+
 void AAdvancedMovementCharacter::MoveForward(float Value)
 {
 	InputVector.X = Value;
@@ -85,6 +89,9 @@ void AAdvancedMovementCharacter::MovementTick()
 	}
 }
 
+
+// ==== Camera ====
+
 void AAdvancedMovementCharacter::LookYaw(float Value)
 {
 	LookVector.X = Value;
@@ -104,6 +111,9 @@ void AAdvancedMovementCharacter::LookTick(float DeltaTime)
 	AddControllerPitchInput(PitchValue);
 	
 }
+
+
+// ==== Sprint ====
 
 void AAdvancedMovementCharacter::BeginSprint()
 {
@@ -149,6 +159,9 @@ void AAdvancedMovementCharacter::JumpPressed()
 		UE_LOG(LogTemp, Warning, TEXT("Jumping..."));
 	}
 }
+
+
+// ==== Ledge Detection ====
 
 void AAdvancedMovementCharacter::DetectLedge()
 {
@@ -216,8 +229,6 @@ FVector AAdvancedMovementCharacter::FindLedgeLocation(FHitResult Body)
 
 	if (success)
 	{
-		DrawDebugSphere(GetWorld(), hitResult.ImpactPoint, 5.f, 32, FColor::Red, false, 5.f);
-
 		return(hitResult.ImpactPoint);
 	}
 
@@ -275,21 +286,38 @@ void AAdvancedMovementCharacter::EndClimbLedge()
 
 }
 
+
+// ==== WallRun ====
+
 bool AAdvancedMovementCharacter::WallRunTrace()
 {
 	FHitResult HitResult;
 	FVector StartLocation = GetActorLocation();
-	FVector EndLocation = StartLocation + (((GetActorForwardVector() * 2.f) + GetActorRightVector()) * 100);
+	FVector EndLocation = StartLocation + (((GetActorForwardVector() ) + GetActorRightVector()) * 100);
+	FVector EndLocationLeft = StartLocation + (((GetActorForwardVector() ) - GetActorRightVector()) * 100);
 
-	bool Trace = GetWorld()->LineTraceSingleByChannel(HitResult, StartLocation, EndLocation, ECC_GameTraceChannel2);
+	bool TraceRight = GetWorld()->LineTraceSingleByChannel(HitResult, StartLocation, EndLocation, ECC_GameTraceChannel2);
+	bool TraceLeft = false;
 
-	if (Trace)
+	if (!TraceRight)
+	{
+		TraceLeft = GetWorld()->LineTraceSingleByChannel(HitResult, StartLocation, EndLocationLeft, ECC_GameTraceChannel2);
+	}
+
+	if (TraceRight || TraceLeft)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Trace Hit"));
 
 		WallRunLocation = HitResult.ImpactPoint + HitResult.ImpactNormal * 50.f;
 
 		LaunchVector = HitResult.ImpactNormal + FVector(0.f, 0.f, 1.f);
+
+		WallTangent = FVector::CrossProduct(HitResult.ImpactNormal, FVector::UpVector);
+
+		if (TraceRight)
+		{
+			WallTangent *= -1.f;
+		}
 
 		return true;
 	}
@@ -299,25 +327,30 @@ bool AAdvancedMovementCharacter::WallRunTrace()
 
 void AAdvancedMovementCharacter::WallRunTick(float DeltaTime)
 {
+	// Stop Wallrun if on ground
+
 	if (CanWallRun && !MovementComponent->IsFalling())
 	{
 		CanWallRun = false;
 	}
 
+	// Check if jumping AND Sprinting
+
 	FVector LateralVelocity = GetVelocity();
 	LateralVelocity.Z = 0.f;
 
-	if (JumpCurrentCount != 0 && LateralVelocity.Length() > 400.f || CanWallRun)
+	if (JumpCurrentCount != 0 && LateralVelocity.Length() > 400.f)		// || CanWallRun)
 	{
 		CanWallRun = WallRunTrace();
 	}
+
+
+	// Stop Wallrun if you leave the wall while still in the air
 
 	if (IsWallRunning && !CanWallRun)
 	{
 		EndWallRun();
 	}
-
-
 }
 
 void AAdvancedMovementCharacter::BeginWallRun()
@@ -327,13 +360,14 @@ void AAdvancedMovementCharacter::BeginWallRun()
 	// Change Gravity
 	MovementComponent->GravityScale = 0.f;
 
-	// Set Z Velocity to 0
 
-	FVector NewVel = MovementComponent->Velocity;
-	NewVel.Z = 0.f;
+	// Set Velocity Parallel to wall
+
+	float VelLength = MovementComponent->Velocity.Length();
+
+	FVector NewVel = WallTangent * VelLength;
+
 	MovementComponent->Velocity = NewVel;
-
-
 }
 
 void AAdvancedMovementCharacter::EndWallRun()
